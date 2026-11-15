@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "crucible-scene": {
+      "command": "node",
+      "args": ["tools/crucible-mcp.mjs"]
+    }
+  }
+}
