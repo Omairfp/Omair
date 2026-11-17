@@ -36,8 +36,8 @@ const add = (i, text, t0, t1, opts) => {
 };
 let n = 0;
 for (const [s, a, b, text] of captions) add(n++, text, start[s] + a, start[s] + b, "fontcolor=white:fontsize=h/19:line_spacing=6:x=(w-text_w)/2:y=h-text_h-h/11:box=1:boxcolor=black@0.55:boxborderw=h/45");
-for (const [s, text] of titles) add(n++, text, start[s] + 0.1, start[s] + SHOTS[s].duration - 0.1, "fontcolor=white@0.75:fontsize=h/30:x=h/18:y=h/18");
-add(n++, credit, start[6] + 6.7, start[6] + 10.9, "fontcolor=white@0.8:fontsize=h/42:x=(w-text_w)/2:y=h-text_h-h/40");
+for (const [s, text] of titles) add(n++, text, start[s] + 0.1, start[s] + SHOTS[s].duration - 0.1, "fontcolor=white@0.9:fontsize=h/24:x=h/18:y=h/18:box=1:boxcolor=black@0.45:boxborderw=h/80");
+add(n++, credit, start[6] + 6.7, start[6] + 10.9, "fontcolor=white@0.85:fontsize=h/34:x=(w-text_w)/2:y=h-text_h-h/40");
 writeFileSync("out/text/filter.txt", filters.join(",\n"));
 
 writeFileSync("out/parts.txt", "file 'part0.mp4'\nfile 'part1.mp4'\n");
