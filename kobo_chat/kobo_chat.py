@@ -274,17 +274,34 @@ def main(argv=None):
     ex.add_argument("--title", help="book title (default: the session's AI title)")
     ex.add_argument("--since", help="start after the last user message containing this text, e.g. 'kobo mode on'")
     ex.add_argument("--out", type=Path, default=Path.cwd() / "kobo_out", help="output folder")
+    bd = sub.add_parser("build", help='build an EPUB from a JSON list of {"role": "user"|"assistant", "text": ...}')
+    bd.add_argument("json_file", type=Path, help="JSON file (a list, or an object with 'title' and 'turns')")
+    bd.add_argument("--title", help="book title")
+    bd.add_argument("--out", type=Path, default=Path.cwd() / "kobo_out", help="output folder")
     a = ap.parse_args(argv)
 
-    src = a.transcript or default_transcript()
-    turns, ai_title = read_turns(src)
-    turns = trim(turns, a.since)
+    if a.cmd == "export":
+        src = a.transcript or default_transcript()
+        turns, ai_title = read_turns(src)
+        turns = trim(turns, a.since)
+    else:
+        src = a.json_file
+        doc = json.loads(src.read_text(encoding="utf-8"))
+        ai_title = doc.get("title") if isinstance(doc, dict) else None
+        raw = doc.get("turns", []) if isinstance(doc, dict) else doc
+        turns = []
+        for t in raw:
+            role = "user" if t.get("role") in ("user", "human") else "assistant"
+            text = (t.get("text") or "").strip()
+            if text:
+                turns.append((role, text))
+        turns = trim(turns, "kobo mode on")
     title = a.title or ai_title or "Claude chat"
     path = build_epub(turns, title, a.out).resolve()
     data = path.read_bytes()
     print(json.dumps({"epub": str(path), "title": title, "bytes": len(data),
                       "sha256": hashlib.sha256(data).hexdigest(), "turns": len(turns),
-                      "transcript": str(src)}))
+                      "source": str(src)}))
 
 
 if __name__ == "__main__":
