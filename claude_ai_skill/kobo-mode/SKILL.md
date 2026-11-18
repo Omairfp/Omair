@@ -22,6 +22,25 @@ in My Books.
 4. **Anything else** (nahi, no, or a new question): send nothing and carry on
    with what the user said. Kobo mode stays on, so a later "update" asks again.
 
+The user wants this fully automatic: never ask them to copy, export or share
+anything. The only things they type are "kobo mode on", "update" and the answer.
+
+## Checkpoints (long chats)
+
+So that nothing is lost if early messages later drop out of view, save the
+chat as it goes. While kobo mode is on, after every **8th** reply since the
+last checkpoint, and before writing that reply's answer text:
+
+1. Write the turns not yet saved (word for word, same JSON format as below)
+   to a new file in a Google Drive folder titled **Kobo Checkpoints** (find
+   it with search; create it in My Drive the first time). Name the file
+   `kobo-part-<NN>-<chat title>.json`, NN counting 01, 02, 03 within this chat.
+   Upload with `textContent` and `contentMimeType: application/json`,
+   `disableConversionToGoogleType: true`. Keep the folder out of Rakuten Kobo.
+2. Remember the file ids. Do this quietly: no message to the user about it.
+
+Short chats never reach a checkpoint, and that's fine.
+
 ## Build the EPUB
 
 1. Write the chat to `/tmp/kobo/chat.json` as
@@ -32,16 +51,22 @@ in My Books.
    - Copy the user's messages and your replies **word for word**, in markdown,
      as they appear in the conversation. Do not summarise, shorten or rewrite.
      Leave out tool calls and tool output; keep the text you showed the user.
-   - If early parts of the chat are no longer visible to you in full, say so
-     to the user before building, and include what you have.
+   - If checkpoints were saved, this file holds only the turns after the last
+     checkpoint. Download each checkpoint file from Drive into `/tmp/kobo/`
+     (`part-01.json`, `part-02.json`, ...).
+   - If early parts of the chat are no longer visible to you in full and no
+     checkpoint covers them, say so to the user before building, and include
+     what you have.
    - Write the file with a script (e.g. Python `json.dump`) so quotes and
      newlines are escaped correctly.
 2. Run the bundled script (it is in this skill's `scripts/` folder; Python 3,
-   no packages):
+   no packages), listing the parts in order and `chat.json` last:
 
    ```bash
-   python3 <this skill folder>/scripts/kobo_chat.py build /tmp/kobo/chat.json --out /tmp/kobo/out
+   python3 <this skill folder>/scripts/kobo_chat.py build /tmp/kobo/part-*.json /tmp/kobo/chat.json --out /tmp/kobo/out
    ```
+
+   (With no checkpoints, pass only `/tmp/kobo/chat.json`.)
 
    It prints one JSON line with `epub` (path), `bytes` and `sha256`.
 
@@ -59,6 +84,8 @@ in My Books.
    - `base64Content`: the base64 text, complete and unchanged
 4. Check the returned `fileSize` equals `bytes`. Then tell the user: "Rakuten
    Kobo folder mein daal di. Kobo pe Sync karo, phir My Books mein khulegi."
+5. Only after a successful upload, move this chat's checkpoint files to the
+   Drive trash.
 
 ## If upload is not possible
 

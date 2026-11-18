@@ -275,7 +275,8 @@ def main(argv=None):
     ex.add_argument("--since", help="start after the last user message containing this text, e.g. 'kobo mode on'")
     ex.add_argument("--out", type=Path, default=Path.cwd() / "kobo_out", help="output folder")
     bd = sub.add_parser("build", help='build an EPUB from a JSON list of {"role": "user"|"assistant", "text": ...}')
-    bd.add_argument("json_file", type=Path, help="JSON file (a list, or an object with 'title' and 'turns')")
+    bd.add_argument("json_files", type=Path, nargs="+",
+                    help="JSON file(s), joined in order (each a list, or an object with 'title' and 'turns')")
     bd.add_argument("--title", help="book title")
     bd.add_argument("--out", type=Path, default=Path.cwd() / "kobo_out", help="output folder")
     a = ap.parse_args(argv)
@@ -285,10 +286,15 @@ def main(argv=None):
         turns, ai_title = read_turns(src)
         turns = trim(turns, a.since)
     else:
-        src = a.json_file
-        doc = json.loads(src.read_text(encoding="utf-8"))
-        ai_title = doc.get("title") if isinstance(doc, dict) else None
-        raw = doc.get("turns", []) if isinstance(doc, dict) else doc
+        src = ", ".join(map(str, a.json_files))
+        ai_title, raw = None, []
+        for f in a.json_files:
+            doc = json.loads(f.read_text(encoding="utf-8"))
+            if isinstance(doc, dict):
+                ai_title = doc.get("title") or ai_title
+                raw += doc.get("turns", [])
+            else:
+                raw += doc
         turns = []
         for t in raw:
             role = "user" if t.get("role") in ("user", "human") else "assistant"
